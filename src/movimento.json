@@ -1,0 +1,11 @@
+{
+    "id": 3,
+    "tipo": "movimento",
+    "valore": false,
+    "zona": [
+        "giardino",
+        "cucina",
+        "bagno"
+    ],
+    "ora": null
+}
