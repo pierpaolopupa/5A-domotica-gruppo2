@@ -7,62 +7,90 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import org.json.JSONObject;
 
-// TODO: Refactor generale
 public class ServerThread extends Thread {
   Socket client;
+  DataOutputStream clientOutput;
   final int MAX_TEMPERATURA = 35;
   public ServerThread(Socket _client) {
     this.client = _client;
-  }
-  public void logMessage(final String type, final String ID, final String message, final DataOutputStream output) {
-    try { output.writeBytes("[" + type + " (ID: " + ID  + ")]: " + message + "\n"); }
+    try { this.clientOutput = new DataOutputStream(this.client.getOutputStream()); }
     catch (IOException e) { e.printStackTrace(); }
   }
+  /*
+   * Mostra un messaggio al client in base a vari parametri.
+   */
+  public void logMessage(String type, String ID, String message) {
+    try { 
+      this.clientOutput.writeBytes(
+        "[ID Richiesta]: " + ID +
+        "\n[" + type + "]: " + message + "\n"
+      ); 
+    }
+    catch (IOException e) { e.printStackTrace(); }
+  }
+  /**
+   * Metodo dei Thread...
+   */
   @Override
   public void run() {
-    try { this.comunica(); }
+    try { 
+      this.comunica();
+      this.client.close();
+      this.clientOutput.close(); 
+    }
     catch (Exception e) { e.printStackTrace(); }
   }
+  /**
+   * Cominca con il client una volta stabilita la connessione.
+   */
   public void comunica() throws Exception {
     BufferedReader clientInput = new BufferedReader(
       new InputStreamReader(this.client.getInputStream())
     );
-    DataOutputStream clientOutput = new DataOutputStream(this.client.getOutputStream());
     boolean canContinue = true;
     while (canContinue) {
-      this.logMessage("INFO", "-", "Inserisci i dati JSON: ", clientOutput);
+      // Il server quì accetta i dati dall'utente
+      this.logMessage("INFO", "-", "Inserisci i dati JSON: ");
       String answer = clientInput.readLine();
-      if (answer == null)
-        break;
+      if (answer == null) // In caso di errore nella risposta non succede niente
+        continue;
       JSONObject json = new JSONObject(answer);
-      final String JSON_ID = json.getString("ID");
+      final String jsonId = json.getString("ID");
       switch (json.getString("tipo")) {
         case "contatto":
-          if (!Boolean.parseBoolean(json.getString("valore")))
-            break;
-          this.logMessage("AVVISO", JSON_ID, "Rilevato contatto in zona: '" + json.getString("zona") + "'", clientOutput);
-          break;
-        case "movimento":
-          if (!Boolean.parseBoolean(json.getString("valore")))
+          if (!Boolean.parseBoolean(json.getString("valore"))) // Se non c'e' contatto esci.
             break;
           this.logMessage(
             "AVVISO", 
-            JSON_ID,
+            jsonId, 
+            "Rilevato contatto in zona: '" + json.getString("zona") + "'"
+          );
+          break;
+        case "movimento":
+          if (!Boolean.parseBoolean(json.getString("valore"))) // Se non c'e' movimento esci.
+            break;
+          this.logMessage(
+            "AVVISO", 
+            jsonId,
             "Rilevato movimento in zona: '" + json.getString("zona") +
-            "' all'ora: " + json.getString("ora"),
-            clientOutput
+            "' all'ora: " + json.getString("ora")
           );
           break;
         case "temperatura":
-          if (Double.parseDouble(json.getString("valore")) > MAX_TEMPERATURA)
-            this.logMessage("ALLARME", JSON_ID, "Temperatura superiore a: " + json.getString("valore"), clientOutput);
+          // Controllo della temperatura
+          if (Double.parseDouble(json.getString("valore")) <= MAX_TEMPERATURA)
+            break;  
+          this.logMessage(
+            "ALLARME", 
+            jsonId, 
+            "Temperatura superiore a: " + json.getString("valore")
+          );
           break;
-        case "exit":
+        case "exit": // Il client verrrà chiuso automaticamente dopo.
           canContinue = false;
-          this.client.close();
           break;
         default:
-          this.logMessage("ERRORE", JSON_ID, "il tipo specificato non esiste.", clientOutput);
+          this.logMessage("ERRORE", jsonId, "il tipo specificato non esiste.");
           break;
       }
     }
