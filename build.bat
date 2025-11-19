@@ -1,33 +1,52 @@
 @echo off
 setlocal
 
-set PROJECT_DIR=%~dp0
-set SRC_DIR=%PROJECT_DIR%src\gruppodue
-set BIN_DIR=%PROJECT_DIR%bin
-set CLASSPATH=%PROJECT_DIR%json.jar
+REM ------------------------------------------------------
+REM Pulizia: uccide eventuali server Java in esecuzione
+REM ------------------------------------------------------
+for /f "tokens=2" %%i in ('tasklist ^| findstr java.exe') do (
+    taskkill /PID %%i /F >nul 2>&1
+)
 
-if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
+REM ------------------------------------------------------
+REM Percorsi
+REM ------------------------------------------------------
+set "PROJECT_DIR=%~dp0"
+set "SRC_DIR=%PROJECT_DIR%src\gruppodue"
+set "BIN_DIR=%PROJECT_DIR%bin"
+set "CLASSPATH=%PROJECT_DIR%json.jar"
 
-REM Creo un file che contiene la lista di tutti i .java
+REM ------------------------------------------------------
+REM 1) Elimina le classi vecchie e ricrea la cartella bin
+REM ------------------------------------------------------
+if exist "%BIN_DIR%" rmdir /s /q "%BIN_DIR%"
+mkdir "%BIN_DIR%"
+
+REM ------------------------------------------------------
+REM 2) Compila tutti i file Java
+REM ------------------------------------------------------
 dir /b /s "%SRC_DIR%\*.java" > "%PROJECT_DIR%sources.txt"
-
-REM Compilo in bin
 javac -cp "%CLASSPATH%" -d "%BIN_DIR%" @"%PROJECT_DIR%sources.txt"
 if errorlevel 1 (
     del "%PROJECT_DIR%sources.txt"
-    pause
-    exit /b
+    exit /b 1
 )
-
 del "%PROJECT_DIR%sources.txt"
 
-REM Avvio server
-start "" cmd /k "cd /d %BIN_DIR% && java -cp .;%CLASSPATH% gruppodue.Server"
+REM ------------------------------------------------------
+REM 3) Avvia il server nel terminale corrente
+REM ------------------------------------------------------
+cd /d "%BIN_DIR%"
+start "" cmd /k "java -cp .;%CLASSPATH% gruppodue.Server"
 
-REM Aspetto un secondo per far partire il server
+REM ------------------------------------------------------
+REM 4) Aspetta 1 secondo
+REM ------------------------------------------------------
 timeout /t 1 >nul
 
-REM Avvio client
+REM ------------------------------------------------------
+REM 5) Avvia il client in un nuovo terminale (qui con cmd)
+REM ------------------------------------------------------
 start "" cmd /k "cd /d %BIN_DIR% && java -cp .;%CLASSPATH% gruppodue.Client"
 
 endlocal
