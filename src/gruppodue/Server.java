@@ -5,20 +5,28 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server {
-	@SuppressWarnings("resource")
-  public static void main(String[] args) {
-    try {
-      ServerSocket server = new ServerSocket(1234);
-      System.out.println("server in ascolto...");
-      while (true) {
-        Socket client = server.accept();
-        System.out.println("accettata la connessione con --> " + client);
+  private final Log logger = new Log();
+  public void start() throws IOException {
+    try (ServerSocket server = new ServerSocket(1234)) {
+       while (true) {
+        final Socket client = server.accept();
+        logger.logMessage("INFO", "Server in ascolto...", null);
         ServerThread thread = new ServerThread(client);
+        logger.logMessage(
+          "INFO", 
+          "Connessione stabilita con --> " + thread.getName(), 
+          null
+        );
         thread.start();
       }
+    } 
+    catch (Exception e) {  
+      logger.logMessage("ERRORE", e.getMessage(), null);
+      System.exit(1);
     }
-    catch (IOException e) {
-      System.err.println("errore dal server --> " + e.getMessage());
-    }
-	}
+  }
+  public static void main(String[] args) throws IOException {
+    Server server = new Server();
+    server.start();
+  }
 }
