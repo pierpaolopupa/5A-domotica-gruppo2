@@ -5,94 +5,87 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+
 import org.json.JSONObject;
 
 public class ServerThread extends Thread {
-  Socket client;
-  DataOutputStream clientOutput;
-  final int MAX_TEMPERATURA = 35;
-  public ServerThread(Socket _client) {
-    this.client = _client;
-    try { this.clientOutput = new DataOutputStream(this.client.getOutputStream()); }
-    catch (IOException e) { e.printStackTrace(); }
-  }
-  /*
-   * Mostra un messaggio al client in base a vari parametri.
-   */
-  public void logMessage(String type, String ID, String message) {
-    try { 
-      this.clientOutput.writeBytes(
-        "[ID Richiesta]: " + ID +
-        "\n[" + type + "]: " + message + "\n"
-      ); 
-    }
-    catch (IOException e) { e.printStackTrace(); }
-  }
+  private Socket client;
+  private BufferedReader clientInput;
+  private DataOutputStream clientOutput;
+  private final int MAX_TEMPERATURA = 35;
+  private final Log logger = new Log();
   /**
-   * Metodo dei Thread...
+   * @param _client Il thread accettato durante l'ascolto del server (Guarda Server.java per dettagli).
+   * @throws IOException
    */
+  public ServerThread(Socket _client) throws IOException {
+    this.client = _client;
+    this.clientInput = new BufferedReader(
+      new InputStreamReader(this.client.getInputStream())
+    );
+    this.clientOutput = new DataOutputStream(this.client.getOutputStream());
+  }
   @Override
   public void run() {
     try { 
       this.comunica();
-      this.client.close();
-      this.clientOutput.close(); 
+      this.client.close(); 
+    } 
+    catch (Exception e) {
+      try {
+        logger.logMessage("ERRORE", e.getMessage(), null);
+      } 
+      catch (IOException e1) { e1.printStackTrace(); }
     }
-    catch (Exception e) { e.printStackTrace(); }
   }
-  /**
-   * Cominca con il client una volta stabilita la connessione.
-   */
-  public void comunica() throws Exception {
-    BufferedReader clientInput = new BufferedReader(
-      new InputStreamReader(this.client.getInputStream())
-    );
-    boolean canContinue = true;
-    while (canContinue) {
-      // Il server quì accetta i dati dall'utente
-      this.logMessage("INFO", "-", "Inserisci i dati JSON: ");
-      String answer = clientInput.readLine();
-      if (answer == null) // In caso di errore nella risposta non succede niente
-        continue;
-      JSONObject json = new JSONObject(answer);
-      final String jsonId = json.getString("ID");
-      switch (json.getString("tipo")) {
-        case "contatto":
-          if (!Boolean.parseBoolean(json.getString("valore"))) // Se non c'e' contatto esci.
-            break;
-          this.logMessage(
-            "AVVISO", 
-            jsonId, 
-            "Rilevato contatto in zona: '" + json.getString("zona") + "'"
-          );
-          break;
-        case "movimento":
-          if (!Boolean.parseBoolean(json.getString("valore"))) // Se non c'e' movimento esci.
-            break;
-          this.logMessage(
-            "AVVISO", 
-            jsonId,
-            "Rilevato movimento in zona: '" + json.getString("zona") +
-            "' all'ora: " + json.getString("ora")
-          );
-          break;
-        case "temperatura":
-          // Controllo della temperatura
-          if (Double.parseDouble(json.getString("valore")) <= MAX_TEMPERATURA)
-            break;  
-          this.logMessage(
-            "ALLARME", 
-            jsonId, 
-            "Temperatura superiore a: " + json.getString("valore")
-          );
-          break;
-        case "exit": // Il client verrrà chiuso automaticamente dopo.
-          canContinue = false;
-          break;
-        default:
-          this.logMessage("ERRORE", jsonId, "il tipo specificato non esiste.");
-          break;
+  private void comunica() throws Exception {
+    logger.logMessage(
+      "INFO", 
+      "Comunicazione iniziata con --> " + getName(), 
+      null
+    ); 
+    boolean uscita = false;
+    while (!uscita) {
+      logger.logMessage("RICHIESTA", "Ora puoi inserire i dati", this.clientOutput);
+      final JSONObject rispostaJson = new JSONObject(this.clientInput.readLine());
+      switch (rispostaJson.getString("tipo")) {
+        case "contatto" -> {
+          if (Boolean.parseBoolean(rispostaJson.getString("valore"))) {
+            logger.logMessage(
+              "AVVISO", 
+              "Rilevato contatto in zona --> " + rispostaJson.getString("zona"), 
+              this.clientOutput
+            );
+          }
+        }
+        case "movimento"-> {
+          if (Boolean.parseBoolean(rispostaJson.getString("valore"))) {
+            logger.logMessage(
+              "AVVISO", 
+              "Rilevato movimento in zona --> " + rispostaJson.getString("zona") +
+              "All'ora --> " + rispostaJson.getString("ora"), 
+              this.clientOutput
+            );
+          }
+        }
+        case "temperatura" -> {
+          if (Double.parseDouble(rispostaJson.getString("valore")) > this.MAX_TEMPERATURA) {
+            logger.logMessage(
+              "ALLARME", 
+              "Temperatura sopra la soglia massima! (" + this.MAX_TEMPERATURA + " Gradi)", 
+              this.clientOutput
+            );
+          }
+        }
+        case "exit" -> {  
+          uscita = true;
+        }
       }
     }
+    logger.logMessage(
+      "INFO", 
+      "Comunicazione terminata con --> " + getName(), 
+      null
+    ); 
   }
 }
