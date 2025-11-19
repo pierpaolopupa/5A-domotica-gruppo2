@@ -1,48 +1,48 @@
 package gruppodue;
 
 import java.util.ArrayList;
+
 import org.json.JSONObject;
 
-// TODO: Risolvere errore ID che non incrementa in prendiUltimoID() e refactor codice generale
 public class GestoreJSON {
-  private ArrayList<JSONObject> cronologiaJson;
-  public GestoreJSON() {
-    this.cronologiaJson = new ArrayList<JSONObject>();
+  private ArrayList<JSONObject> richiesteJson = new ArrayList<JSONObject>();
+  private int creaNuovoId() {
+    if (this.richiesteJson.isEmpty())
+      return 0;
+    return Integer.parseInt(
+      this.richiesteJson.get(
+        this.richiesteJson.size() - 1).getString("ID")
+    ) + 1; 
   }
-  private String prendiUltimoID() {
-    if (this.cronologiaJson.isEmpty())
-      return "0";
-    return Integer.toString(
-      Integer.parseInt(
-        this.cronologiaJson.get(this.cronologiaJson.size() - 1).getString("ID")
-      ) + 1
-    );
-  }
-  public String generaDati(final String tipo, final double valoreDouble, 
-    final boolean valoreBool, final String zona, final String ora
-  ) {
+  /**
+   * @param tipo Chi sta inviando? (contatto, movimento, temperatura).
+   * @param valoreDouble Il valore per la temperatura.
+   * @param valoreBool Il valore per contatto e movimento.
+   * @param zona La zona in cui e' stato rilevato contatto o movimento.
+   * @param ora L'ora in cui e' stato rilevato contatto o movimento.
+   * @return Un json stringa dei parametri. 
+   */
+  public String generaDati(String tipo, double valoreDouble, boolean valoreBool, String zona, String ora) {
     JSONObject json = new JSONObject();
-    json.put("ID", this.prendiUltimoID());
+    json.put("ID", this.creaNuovoId());
+    json.put("tipo", tipo.toLowerCase());
     switch (tipo.toLowerCase()) {
-      case "contatto":
-        json.put("tipo", "contatto");
-        json.put("valore", Boolean.toString(valoreBool));
+      case "exit" -> {}
+      case "contatto" -> {
+        json.put("valore", valoreBool);
         json.put("zona", zona);
-        break;
-      case "movimento":
-        json.put("tipo", "movimento");
-        json.put("valore", Boolean.toString(valoreBool));
+      }
+      case "movimento" -> {
+        json.put("valore", valoreBool);
         json.put("zona", zona);
         json.put("ora", ora);
-        break;
-      case "temperatura":
-        json.put("tipo", "temperatura");
-        json.put("valore", Double.toString(valoreDouble));
-        break;
-      default:
+      }
+      case "temperatura" -> json.put("valore", valoreDouble);
+      default -> {
         return "";
+      }
     }
-    this.cronologiaJson.add(json);
+    this.richiesteJson.add(json);
     return json.toString();
   }
 }
