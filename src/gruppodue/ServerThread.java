@@ -53,7 +53,6 @@ public class ServerThread extends Thread {
         logger.logMessage("ERRORE", "JSON non valido: " + riga, this.clientOutput);
         continue;
       }
-      System.out.println("ID: " + rispostaJson.getInt("ID"));
       switch (rispostaJson.getString("tipo")) {
         case "contatto" -> {
           boolean contatto = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
