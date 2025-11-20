@@ -1,3 +1,7 @@
 Stato Progetto: <br>
 
-Quasi finito, risolvere il problema dove il client puo' inviare massimo 1 richiesta prima di crashare.
+Finito / Incompleto
+
+Spiegazione: <br>
+
+Funziona tutto, ma manca la funzionalita' di tenere l'ID nella richiesta JSON del client
