@@ -8,15 +8,12 @@ public class Server {
   private final Log logger = new Log();
   public void start() throws IOException {
     try (ServerSocket server = new ServerSocket(1234)) {
-       while (true) {
+      // Va avanti fino a quando non viene fermato il server dal terminale
+      while (true) {
         final Socket client = server.accept();
         logger.logMessage("INFO", "Server in ascolto...", null);
         ServerThread thread = new ServerThread(client);
-        logger.logMessage(
-          "INFO", 
-          "Connessione stabilita con --> " + thread.getName(), 
-          null
-        );
+        logger.logMessage("INFO", "Connessione stabilita con --> " + thread.getName(), null);
         thread.start();
       }
     } 
@@ -26,7 +23,7 @@ public class Server {
     }
   }
   public static void main(String[] args) throws IOException {
-    Server server = new Server();
+    final Server server = new Server();
     server.start();
   }
 }
