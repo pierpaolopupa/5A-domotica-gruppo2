@@ -1,6 +1,6 @@
 Stato Progetto: <br>
 
-Finito / Incompleto
+Finito ma Incompleto
 
 Spiegazione: <br>
 
