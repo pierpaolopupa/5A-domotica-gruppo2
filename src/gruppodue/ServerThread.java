@@ -39,46 +39,70 @@ public class ServerThread extends Thread {
     }
   }
   private void comunica() throws Exception {
-    logger.logMessage(
-      "INFO", 
-      "Comunicazione iniziata con --> " + getName(), 
-      null
-    ); 
-    boolean uscita = false;
-    while (!uscita) {
-      logger.logMessage("RICHIESTA", "Ora puoi inserire i dati", this.clientOutput);
-      final JSONObject rispostaJson = new JSONObject(this.clientInput.readLine());
+    logger.logMessage("INFO", "Comunicazione iniziata con --> " + getName(), null); 
+    boolean restare = true;
+    while (restare) {
+      final String riga = this.clientInput.readLine();
+      if (riga == null) {
+        logger.logMessage("INFO", "Connessione chiusa dal client", null);
+        break;
+      }
+      JSONObject rispostaJson;
+      try { rispostaJson = new JSONObject(riga); } 
+      catch (Exception parseEx) {
+        logger.logMessage("ERRORE", "JSON non valido: " + riga, this.clientOutput);
+        continue;
+      }
+      System.out.println("ID: " + rispostaJson.getInt("ID"));
       switch (rispostaJson.getString("tipo")) {
         case "contatto" -> {
-          if (Boolean.parseBoolean(rispostaJson.getString("valore"))) {
+          boolean contatto = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
+          if (contatto) {
             logger.logMessage(
               "AVVISO", 
               "Rilevato contatto in zona --> " + rispostaJson.getString("zona"), 
               this.clientOutput
             );
           }
+          else
+            logger.logMessage("INFO", "Nessun contatto rilevato", this.clientOutput);
         }
         case "movimento"-> {
-          if (Boolean.parseBoolean(rispostaJson.getString("valore"))) {
+          boolean movimento = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
+          if (movimento) {
             logger.logMessage(
               "AVVISO", 
               "Rilevato movimento in zona --> " + rispostaJson.getString("zona") +
-              "All'ora --> " + rispostaJson.getString("ora"), 
+              " all'ora --> " + rispostaJson.getString("ora"), 
               this.clientOutput
             );
           }
+          else
+            logger.logMessage("INFO", "Nessun movimento rilevato",this.clientOutput);
         }
         case "temperatura" -> {
-          if (Double.parseDouble(rispostaJson.getString("valore")) > this.MAX_TEMPERATURA) {
-            logger.logMessage(
-              "ALLARME", 
-              "Temperatura sopra la soglia massima! (" + this.MAX_TEMPERATURA + " Gradi)", 
-              this.clientOutput
-            );
+          try {
+            double temp = Double.parseDouble(rispostaJson.getString("valore").trim());
+            if (temp > this.MAX_TEMPERATURA) {
+              logger.logMessage(
+                "ALLARME", 
+                "Temperatura sopra la soglia massima! (" + this.MAX_TEMPERATURA + " Gradi)", 
+                this.clientOutput
+              );
+            }
+            else
+              logger.logMessage("INFO", "Temperatura ok", this.clientOutput);
+          } 
+          catch (NumberFormatException ex) {
+            logger.logMessage("ERRORE", "Valore non valido", this.clientOutput);
           }
         }
         case "exit" -> {  
-          uscita = true;
+          restare = false;
+          logger.logMessage("INFO", "Chiusura comunicazione richiesta", this.clientOutput);
+        }
+        default -> {
+          logger.logMessage("ERRORE", "Tipo di richiesta inesistente", this.clientOutput);
         }
       }
     }
