@@ -3,6 +3,7 @@ package gruppodue;
 import java.io.BufferedReader;
 import java.util.Scanner;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
@@ -10,90 +11,113 @@ public class Client {
   final String host = "localhost";
   final int porta = 1234;
   final Log logger = new Log();
-  public void comunica() {
+  BufferedReader serverInput;
+  private void leggiMessaggiServer() throws IOException {
+    String risposta;
+    // leggi almeno una riga; poi consuma quelle già pronte
+    risposta = serverInput.readLine();
+    if (risposta != null) System.out.println(risposta);
+    while (serverInput.ready() && (risposta = serverInput.readLine()) != null) {
+      System.out.println(risposta);
+    }
+  }
+  public void comunica() throws IOException {
     try {
       Socket socket = new Socket(host, porta);
       DataOutputStream serverOutput = new DataOutputStream(socket.getOutputStream());
-      BufferedReader serverInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      this.serverInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      String valore, zona, ora;
+      Scanner input = new Scanner(System.in);
       GestoreJSON gestoreJSON = new GestoreJSON();
-      System.out.println(serverInput.readLine());
-      Scanner in = new Scanner(System.in);
-      int scelta;
-      int tipo_contatto, tipo_movimento;
-      String zona_contatto, zona_movimento;
-      boolean valore_contatto, valore_movimento;
-      String ora_movimento;
-      boolean uscita = false;
-      while(!uscita) {
+      boolean restare = true;
+      while(restare) {
         System.out.print(
           """
           0 = fine
           1 = temperatura
           2 = contatto
           3 = movimento
-          """ + "Cosa vuoi rilevare?: "
+          """ + "Scegli: "
         );
-        scelta = in.nextInt();
-    	  switch(scelta) {
+        switch(Integer.parseInt(input.nextLine())) {
           case 0 -> {
-            uscita = true;
+            restare = false;
             serverOutput.writeBytes(
-              gestoreJSON.generaDati("exit", 0, false, "", "") + "\n"
-            );
-          }
-          case 1 -> {
-            //  Fare caso 1 (non mettere break alla fine perche' lo fa da solo)
-          }
-          // TODO: Richiedere bene e inviare in modo corretto i dati
-          case 2 -> {
-            System.out.println("***CONTATTO***");
-            System.out.println("Tipo di contatto: ");
-            tipo_contatto = in.nextInt();
-            System.out.println("Assicurati che sia effettivamente avvenuto un contatto: ");
-            valore_contatto = in.nextBoolean();
-            System.out.println("Zona in cui è avvenuto il contatto: ");
-            zona_contatto = in.next();
-            serverOutput.writeBytes(gestoreJSON.generaDati(
-                  "contatto",
-                  tipo_contatto,
-                  valore_contatto,
-                  zona_contatto,
-                  ""
-                ) + "\n"
-            );
-          }
-          // TODO: Richiedere bene e inviare in modo corretto i dati
-          case 3 -> {
-            System.out.println("***MOVIMENTO***");
-            System.out.println("Tipo di movimento: ");
-            tipo_movimento = in.nextInt();
-            System.out.println("Assicurati che ci sia stato davvero un movimento: ");
-            valore_movimento = in.nextBoolean();
-            System.out.println("Zona in cui c'è stato il movimento: ");
-            zona_movimento = in.next();
-            System.out.println("Ora in cui c'è stasto il movimento: ");
-            ora_movimento = in.next();
-            serverOutput.writeBytes(gestoreJSON.generaDati(
-              "movimento",
-                tipo_movimento,
-                valore_movimento,
-                zona_movimento,
-                ora_movimento
+              gestoreJSON.generaDati(
+                "exit", 
+                null, 
+                null, 
+                null, 
+                null
               ) + "\n"
             );
+            serverOutput.flush();
           }
-        } 
-        System.out.println(serverInput.readLine());
+          case 1 -> {
+            logger.logMessage("RICHIESTA", "Inserisci il valore", null);
+            valore = input.nextLine();
+            serverOutput.writeBytes(
+              gestoreJSON.generaDati(
+                "temperatura",
+                valore.trim(),
+                null,
+                null,
+                null
+              ) + "\n"
+            );
+            serverOutput.flush();
+          }
+          case 2 -> {
+            logger.logMessage("RICHIESTA", "Contatto avvenuto? (true/false)", null);
+            valore = input.nextLine();
+            logger.logMessage("RICHIESTA", "Zona del contatto?", null);
+            zona = input.nextLine();
+            serverOutput.writeBytes(
+              gestoreJSON.generaDati(
+                "contatto",
+                null,
+                valore.trim(),
+                zona,
+                null
+              ) + "\n"
+            );
+            serverOutput.flush();
+          }
+          case 3 -> {
+            logger.logMessage("RICHIESTA", "Movimento avvenuto? (true/false)", null);
+            valore = input.nextLine();
+            logger.logMessage("RICHIESTA", "Zona del movimento?", null);
+            zona = input.nextLine();
+            logger.logMessage("RICHIESTA", "Ora del movimento?", null);
+            ora = input.nextLine();
+            serverOutput.writeBytes(
+              gestoreJSON.generaDati(
+                "movimento",
+                null,
+                valore.trim(),
+                zona,
+                ora
+              ) + "\n"
+            );
+            serverOutput.flush();
+          }
+        }
+        this.leggiMessaggiServer();
       }
-      in.close();
+      input.close();
       socket.close();
+      this.serverInput.close();
     }
     catch (Exception e) {
-      System.err.println("errore dal client --> " + e.getMessage());
+      logger.logMessage(
+        "ERRORE", 
+        e.getMessage(), 
+        null
+      );
     }
   }
-  public static void main(String[] args) {
-    Client client = new Client(); 
+  public static void main(String[] args) throws IOException {
+    final Client client = new Client(); 
     client.comunica();
   }
 }
