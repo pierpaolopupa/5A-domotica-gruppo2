@@ -40,19 +40,23 @@ public class ServerThread extends Thread {
   }
   private void comunica() throws Exception {
     logger.logMessage("INFO", "Comunicazione iniziata con --> " + getName(), null); 
+    // Il ciclo va fino a quando il client non vuole uscire
     boolean restare = true;
     while (restare) {
+      // Se il client esce senza inviare risposta
       final String riga = this.clientInput.readLine();
       if (riga == null) {
         logger.logMessage("INFO", "Connessione chiusa dal client", null);
         break;
       }
+      // Prendo e controllo la risposta con i dati del client
       JSONObject rispostaJson;
       try { rispostaJson = new JSONObject(riga); } 
       catch (Exception parseEx) {
-        logger.logMessage("ERRORE", "JSON non valido: " + riga, this.clientOutput);
+        logger.logMessage("ERRORE", "JSON non valido", this.clientOutput);
         continue;
       }
+      // Controllo il tipo della risposta e rispondo in base al valore
       switch (rispostaJson.getString("tipo")) {
         case "contatto" -> {
           boolean contatto = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
@@ -80,6 +84,7 @@ public class ServerThread extends Thread {
             logger.logMessage("INFO", "Nessun movimento rilevato",this.clientOutput);
         }
         case "temperatura" -> {
+          // Prendo e controllo la temperatura convertendola 
           try {
             double temp = Double.parseDouble(rispostaJson.getString("valore").trim());
             if (temp > this.MAX_TEMPERATURA) {
