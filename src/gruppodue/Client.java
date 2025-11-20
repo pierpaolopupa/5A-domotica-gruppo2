@@ -51,7 +51,6 @@ public class Client {
                 null
               ) + "\n"
             );
-            serverOutput.flush();
           }
           case 1 -> {
             logger.logMessage("RICHIESTA", "Inserisci il valore", null);
@@ -65,7 +64,6 @@ public class Client {
                 null
               ) + "\n"
             );
-            serverOutput.flush();
           }
           case 2 -> {
             logger.logMessage("RICHIESTA", "Contatto avvenuto? (true/false)", null);
@@ -81,7 +79,6 @@ public class Client {
                 null
               ) + "\n"
             );
-            serverOutput.flush();
           }
           case 3 -> {
             logger.logMessage("RICHIESTA", "Movimento avvenuto? (true/false)", null);
@@ -99,9 +96,9 @@ public class Client {
                 ora
               ) + "\n"
             );
-            serverOutput.flush();
           }
         }
+        serverOutput.flush();
         this.leggiMessaggiServer();
       }
       input.close();
