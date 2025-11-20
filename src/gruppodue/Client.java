@@ -21,6 +21,7 @@ public class Client {
       System.out.println(risposta);
     }
   }
+  @SuppressWarnings("resource")
   public void comunica() throws IOException {
     try {
       Socket socket = new Socket(host, porta);
@@ -103,7 +104,6 @@ public class Client {
       }
       input.close();
       socket.close();
-      this.serverInput.close();
     }
     catch (Exception e) {
       logger.logMessage(
