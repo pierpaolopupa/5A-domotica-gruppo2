@@ -1,28 +1,29 @@
 package gruppodue;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server {
-  private final Log logger = new Log();
-  public void start() throws IOException {
+  final Logger logger = new Logger();
+  /**
+   * Avvia il server, ascolta per potenziali connessioni e se le trova crea un nuovo thread per quest'ultime.
+   */
+  private void start() {
     try (ServerSocket server = new ServerSocket(1234)) {
-      // Va avanti fino a quando non viene fermato il server dal terminale
       while (true) {
         final Socket client = server.accept();
-        logger.logMessage("INFO", "Server in ascolto...", null);
-        ServerThread thread = new ServerThread(client);
-        logger.logMessage("INFO", "Connessione stabilita con --> " + thread.getName(), null);
-        thread.start();
+        logger.log(LivelloLog.INFO, "Server in ascolto...", null);
+        final ServerThread thread = new ServerThread(client);
+        logger.log(LivelloLog.INFO, "Connessione accettata con: " + thread.getName(), null);
+        thread.run();
+        logger.log(LivelloLog.INFO, "Connessione terminata con: " + thread.getName(), null);
       }
-    } 
-    catch (Exception e) {  
-      logger.logMessage("ERRORE", e.getMessage(), null);
-      System.exit(1);
+    }
+    catch (Exception ex) {
+      System.err.println("Errore durante l'esecuzone di start() (Server.java): " + ex.getMessage());
     }
   }
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     final Server server = new Server();
     server.start();
   }
