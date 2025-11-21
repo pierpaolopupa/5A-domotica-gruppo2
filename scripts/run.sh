@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Termina qualsiasi processo che sta utilizzando la porta 1234
-sudo lsof -ti:1234 | xargs sudo kill -9
+# Libera la porta usata dal Server
+fuser -k 1234/tcp
 
 # Termina eventuali processi di gruppodue.Server e gruppodue.Client
 pkill -f 'gruppodue.Server'
@@ -23,4 +23,4 @@ java -cp "$LIB_PATH:bin" gruppodue.Server &
 sleep 1
 
 # Esegui il file Client.java in un altro terminale includendo la libreria
-kitty --hold -e java -cp "$LIB_PATH:bin" gruppodue.Client
+kitty java -cp "$LIB_PATH:bin" gruppodue.Client
