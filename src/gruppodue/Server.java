@@ -15,8 +15,7 @@ public class Server {
         logger.log(LivelloLog.INFO, "Server in ascolto...", null);
         final ServerThread thread = new ServerThread(client);
         logger.log(LivelloLog.INFO, "Connessione accettata con: " + thread.getName(), null);
-        thread.run();
-        logger.log(LivelloLog.INFO, "Connessione terminata con: " + thread.getName(), null);
+        thread.start();
       }
     }
     catch (Exception ex) {
