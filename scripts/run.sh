@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Termina qualsiasi processo che sta utilizzando la porta 1234
+sudo lsof -ti:1234 | xargs sudo kill -9
+
+# Termina eventuali processi di gruppodue.Server e gruppodue.Client
+pkill -f 'gruppodue.Server'
+pkill -f 'gruppodue.Client'
+
 # Pulisce il terminale
 clear
 
