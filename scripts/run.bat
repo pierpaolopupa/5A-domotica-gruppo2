@@ -1,25 +1,26 @@
 @echo off
+REM Libera la porta usata dal Server (termina processi che usano la porta 1234)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :1234') do (
+    taskkill /PID %%a /F >nul 2>&1
+)
 
-:: Termina eventuali processi che occupano la porta 1234
-for /f "tokens=5" %%i in ('netstat -ano ^| findstr :1234') do taskkill /f /pid %%i
+REM Termina eventuali processi di gruppodue.Server e gruppodue.Client
+taskkill /F /IM java.exe >nul 2>&1
 
-:: Termina eventuali processi di gruppodue.Server e gruppodue.Client
-taskkill /f /im java.exe /t
-
-:: Pulisce la finestra del terminale
+REM Pulisce il terminale
 cls
 
-:: Percorso della libreria JSON
+REM Percorso della libreria JSON
 set LIB_PATH=lib\json-java.jar
 
-:: Compila i file .java nella cartella src\gruppodue\ includendo la libreria
+REM Compila i file .java nella cartella src\gruppodue\ includendo la libreria
 javac -d bin -cp "%LIB_PATH%" src\gruppodue\*.java
 
-:: Esegui il file Server.java nel terminale corrente includendo la libreria
-start /b java -cp "%LIB_PATH%;bin" gruppodue.Server
+REM Esegui il file Server.java nel terminale corrente includendo la libreria
+start "Server" cmd /c java -cp "%LIB_PATH%;bin" gruppodue.Server
 
-:: Attendi 1 secondo per dare tempo al Server di partire
-timeout /t 1 /nobreak
+REM Attendi un secondo per dare tempo al Server di partire
+timeout /t 1 >nul
 
-:: Esegui il file Client.java in un altro terminale includendo la libreria
-start cmd /k java -cp "%LIB_PATH%;bin" gruppodue.Client
+REM Esegui il file Client.java in un altro terminale includendo la libreria
+start "Client" cmd /c java -cp "%LIB_PATH%;bin" gruppodue.Client
