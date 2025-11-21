@@ -13,107 +13,71 @@ public class ServerThread extends Thread {
   private BufferedReader clientInput;
   private DataOutputStream clientOutput;
   private final int MAX_TEMPERATURA = 35;
-  private final Log logger = new Log();
+  private final Logger logger = new Logger();
   /**
-   * @param _client Il thread accettato durante l'ascolto del server (Guarda Server.java per dettagli).
-   * @throws IOException
+   * @param _client Il client accettato dal server (Guarda Server.java)
    */
-  public ServerThread(Socket _client) throws IOException {
+  public ServerThread(final Socket _client) { 
     this.client = _client;
-    this.clientInput = new BufferedReader(
-      new InputStreamReader(this.client.getInputStream())
-    );
-    this.clientOutput = new DataOutputStream(this.client.getOutputStream());
+    try {
+      this.clientInput = new BufferedReader(new InputStreamReader(this.client.getInputStream())); 
+      this.clientOutput = new DataOutputStream(this.client.getOutputStream());
+    }
+    catch (IOException ex) {
+      System.err.println("Errore durante il costruttore del thread (ServerThread.java): " + ex.getMessage());
+    }
+  }
+  public void comunica() throws Exception {
+    logger.log(LivelloLog.INFO, "Comunicazione iniziata con: " + this.client, null);
+    boolean condizione = true;
+    while (condizione) {
+      String rispostaClient = this.clientInput.readLine(); // Il client legge il menu e risponde.
+      switch (rispostaClient.trim()) {
+        case "0" -> { condizione = false; }
+        case "1" -> { 
+          final Double temp = Double.parseDouble(new JSONObject(this.clientInput.readLine()).getString("valore"));
+          if (temp < this.MAX_TEMPERATURA)
+            logger.log(LivelloLog.INFO, "Temperatura ok!", this.clientOutput);
+          else
+            logger.log(LivelloLog.ALLARME, "Temperatura sopra la soglia massima!", this.clientOutput);
+        }
+        case "2" -> {
+          final JSONObject jo = new JSONObject(this.clientInput.readLine());
+          if (!Boolean.parseBoolean(jo.getString("valore")))
+            logger.log(LivelloLog.INFO, "Nessun movimento rilevato", this.clientOutput);
+          else {
+            logger.log(
+              LivelloLog.AVVISO, 
+              "Movimento rilevato in zona: " + jo.getString("zona") + ", all'ora: " + jo.getString("ora"), 
+              this.clientOutput
+            );
+          }
+        }
+        case "3" -> {
+          final JSONObject jo = new JSONObject(this.clientInput.readLine());
+          if (!Boolean.parseBoolean(jo.getString("valore")))
+            logger.log(LivelloLog.INFO, "Nessun contatto rilevato", this.clientOutput);
+          else {
+            logger.log(
+              LivelloLog.AVVISO, 
+              "Contatto rilevato in zona: " + jo.getString("zona"),
+              this.clientOutput
+            );
+          }
+        }
+      }
+    }
+    this.clientOutput.flush();
+    this.client.close();
   }
   @Override
   public void run() {
     try { 
       this.comunica();
-      this.client.close(); 
-    } 
-    catch (Exception e) {
-      try {
-        logger.logMessage("ERRORE", e.getMessage(), null);
-      } 
-      catch (IOException e1) { e1.printStackTrace(); }
+      this.client.close();
     }
-  }
-  private void comunica() throws Exception {
-    logger.logMessage("INFO", "Comunicazione iniziata con --> " + getName(), null); 
-    // Il ciclo va fino a quando il client non vuole uscire
-    boolean restare = true;
-    while (restare) {
-      // Se il client esce senza inviare risposta
-      final String riga = this.clientInput.readLine();
-      if (riga == null) {
-        logger.logMessage("INFO", "Connessione chiusa dal client", null);
-        break;
-      }
-      // Prendo e controllo la risposta con i dati del client
-      JSONObject rispostaJson;
-      try { rispostaJson = new JSONObject(riga); } 
-      catch (Exception parseEx) {
-        logger.logMessage("ERRORE", "JSON non valido", this.clientOutput);
-        continue;
-      }
-      // Controllo il tipo della risposta e rispondo in base al valore
-      switch (rispostaJson.getString("tipo")) {
-        case "contatto" -> {
-          boolean contatto = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
-          if (contatto) {
-            logger.logMessage(
-              "AVVISO", 
-              "Rilevato contatto in zona --> " + rispostaJson.getString("zona"), 
-              this.clientOutput
-            );
-          }
-          else
-            logger.logMessage("INFO", "Nessun contatto rilevato", this.clientOutput);
-        }
-        case "movimento"-> {
-          boolean movimento = Boolean.parseBoolean(rispostaJson.getString("valore").trim());
-          if (movimento) {
-            logger.logMessage(
-              "AVVISO", 
-              "Rilevato movimento in zona --> " + rispostaJson.getString("zona") +
-              " all'ora --> " + rispostaJson.getString("ora"), 
-              this.clientOutput
-            );
-          }
-          else
-            logger.logMessage("INFO", "Nessun movimento rilevato",this.clientOutput);
-        }
-        case "temperatura" -> {
-          // Prendo e controllo la temperatura convertendola 
-          try {
-            double temp = Double.parseDouble(rispostaJson.getString("valore").trim());
-            if (temp > this.MAX_TEMPERATURA) {
-              logger.logMessage(
-                "ALLARME", 
-                "Temperatura sopra la soglia massima! (" + this.MAX_TEMPERATURA + " Gradi)", 
-                this.clientOutput
-              );
-            }
-            else
-              logger.logMessage("INFO", "Temperatura ok", this.clientOutput);
-          } 
-          catch (NumberFormatException ex) {
-            logger.logMessage("ERRORE", "Valore non valido", this.clientOutput);
-          }
-        }
-        case "exit" -> {  
-          restare = false;
-          logger.logMessage("INFO", "Chiusura comunicazione richiesta", this.clientOutput);
-        }
-        default -> {
-          logger.logMessage("ERRORE", "Tipo di richiesta inesistente", this.clientOutput);
-        }
-      }
+    catch (Exception ex) {
+      System.err.println("Errore durante l'esecuzione di run (ServerThread.java): " + ex.getMessage());
     }
-    logger.logMessage(
-      "INFO", 
-      "Comunicazione terminata con --> " + getName(), 
-      null
-    ); 
   }
 }
