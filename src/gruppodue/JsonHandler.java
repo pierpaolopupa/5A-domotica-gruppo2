@@ -1,6 +1,5 @@
 package gruppodue;
 
-import java.util.ArrayList;
 import org.json.JSONObject;
 
 public class JsonHandler {
