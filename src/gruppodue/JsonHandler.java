@@ -5,7 +5,6 @@ import org.json.JSONObject;
 
 public class JsonHandler {
   /**
-   * @param tipo Chi ha inviato i dati.
    * @param valore Che valore hanno i dati (decimale se temperatura).
    * @param zona In che zona sono stati rilevati (nessuna se temperatura).
    * @param ora A che ora sono stati rilevati (nessuna se temperatura).
