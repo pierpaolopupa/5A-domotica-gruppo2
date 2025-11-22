@@ -5,9 +5,9 @@ import org.json.JSONObject;
 
 public class JsonHandler {
   /**
-   * @param valore Che valore hanno i dati (decimale se temperatura).
-   * @param zona In che zona sono stati rilevati (nessuna se temperatura).
-   * @param ora A che ora sono stati rilevati (nessuna se temperatura).
+   * @param valore Che valore hanno i dati.
+   * @param zona In che zona sono stati rilevati.
+   * @param ora A che ora sono stati rilevati.
    * @return JSON con i dati inviati.
    */
   public String creaDatiJson(final String valore, final String zona, final String ora) {
