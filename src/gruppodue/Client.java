@@ -28,9 +28,13 @@ public class Client {
       this.serverOutput = new DataOutputStream(this.socket.getOutputStream());
     }
     catch (IOException ex) {
-      System.err.println("Errore durante il costruttore del client (Client.java): " + ex.getMessage());
+      System.err.println("Errore durante la costruzione del client (Client.java): " + ex.getMessage());
     }
   }
+  /**
+   * Il Client comunica direttamente con il ServerThread.
+   * Ad ogni richiesta del server c'e' una risposta del client.
+   */
   public void comunica() {
     try {
       boolean condizione = true;
@@ -39,7 +43,9 @@ public class Client {
         String risposta = this.input.readLine();
         this.serverOutput.writeBytes(risposta + "\n");
         switch (risposta.trim()) {
+          // Esci
           case "0" -> { condizione = false; }
+          // Temperatura
           case "1" -> {
             logger.log(LivelloLog.RICHIESTA, "Gradi?", null);
             risposta = this.input.readLine();
@@ -51,9 +57,10 @@ public class Client {
               ) + "\n"
             );
           }
+          // Movimento
           case "2" -> {
-            String zona = null;
             String ora = null;
+            String zona = null;
             logger.log(LivelloLog.RICHIESTA, "Movimento rilevato? (true/false)", null);
             risposta = this.input.readLine();
             if (Boolean.parseBoolean(risposta)) {
@@ -70,6 +77,7 @@ public class Client {
               ) + "\n"
             );
           }
+          // Contatto
           case "3" -> {
             String zona = null;
             logger.log(LivelloLog.RICHIESTA, "Contatto rilevato? (true/false)", null);
