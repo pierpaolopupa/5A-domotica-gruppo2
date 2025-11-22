@@ -24,16 +24,23 @@ public class ServerThread extends Thread {
       this.clientOutput = new DataOutputStream(this.client.getOutputStream());
     }
     catch (IOException ex) {
-      System.err.println("Errore durante il costruttore del thread (ServerThread.java): " + ex.getMessage());
+      System.err.println("Errore durante la costruzione del thread (ServerThread.java): " + ex.getMessage());
     }
   }
+  /**
+   * Il ServerThread comunica direttamente con il client.
+   * Ad ogni richiesta del server c'e' una risposta del client.
+   * @throws Exception
+   */
   public void comunica() throws Exception {
     logger.log(LivelloLog.INFO, "Comunicazione iniziata con: " + this.getName(), null);
     boolean condizione = true;
     while (condizione) {
       String rispostaClient = this.clientInput.readLine(); // Il client legge il menu e risponde.
       switch (rispostaClient.trim()) {
+        // Esci
         case "0" -> { condizione = false; }
+        // Temperatura
         case "1" -> { 
           final Double temp = Double.parseDouble(new JSONObject(this.clientInput.readLine()).getString("valore"));
           if (temp < this.MAX_TEMPERATURA)
@@ -41,6 +48,7 @@ public class ServerThread extends Thread {
           else
             logger.log(LivelloLog.ALLARME, "Temperatura sopra la soglia massima!", this.clientOutput);
         }
+        // Movimento
         case "2" -> {
           final JSONObject jo = new JSONObject(this.clientInput.readLine());
           if (!Boolean.parseBoolean(jo.getString("valore")))
@@ -53,6 +61,7 @@ public class ServerThread extends Thread {
             );
           }
         }
+        // Contatto
         case "3" -> {
           final JSONObject jo = new JSONObject(this.clientInput.readLine());
           if (!Boolean.parseBoolean(jo.getString("valore")))
@@ -66,8 +75,8 @@ public class ServerThread extends Thread {
           }
         }
       }
+      this.clientOutput.flush();
     }
-    this.clientOutput.flush();
     this.client.close();
   }
   @Override
