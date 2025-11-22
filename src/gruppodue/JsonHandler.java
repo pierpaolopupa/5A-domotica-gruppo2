@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import org.json.JSONObject;
 
 public class JsonHandler {
-  private ArrayList<JSONObject> cronologiaJson;
-  public JsonHandler() {
-    this.cronologiaJson = new ArrayList<JSONObject>();
-  }
   /**
    * @param tipo Chi ha inviato i dati.
    * @param valore Che valore hanno i dati (decimale se temperatura).
@@ -21,7 +17,6 @@ public class JsonHandler {
     jo.put("valore", valore);
     jo.put("zona", zona);
     jo.put("ora", ora);
-    this.cronologiaJson.add(jo);
     return jo.toString();
   }
 }
