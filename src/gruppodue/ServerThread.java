@@ -42,7 +42,12 @@ public class ServerThread extends Thread {
         case "0" -> { condizione = false; }
         // Temperatura
         case "1" -> { 
-          final Double temp = Double.parseDouble(new JSONObject(this.clientInput.readLine()).getString("valore"));
+          Double temp;
+          try { temp = Double.parseDouble(new JSONObject(this.clientInput.readLine()).getString("valore")); }
+          catch (NumberFormatException ex) { 
+            logger.log(LivelloLog.INFO, "Inserisci dati validi!", this.clientOutput);
+            continue; 
+          }
           if (temp < this.MAX_TEMPERATURA)
             logger.log(LivelloLog.INFO, "Temperatura ok!", this.clientOutput);
           else
