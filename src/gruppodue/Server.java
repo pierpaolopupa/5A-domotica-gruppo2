@@ -1,7 +1,6 @@
 package gruppodue;
 
 import java.net.ServerSocket;
-import java.net.Socket;
 
 public class Server {
   final Logger logger = new Logger();
@@ -11,9 +10,8 @@ public class Server {
   private void start() {
     try (ServerSocket server = new ServerSocket(1234)) {
       while (true) {
-        final Socket client = server.accept();
         logger.log(LivelloLog.INFO, "Server in ascolto...", null);
-        final ServerThread thread = new ServerThread(client);
+        final ServerThread thread = new ServerThread(server.accept());
         logger.log(LivelloLog.INFO, "Connessione accettata con: " + thread.getName(), null);
         thread.start();
       }
