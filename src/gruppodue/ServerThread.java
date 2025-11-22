@@ -28,6 +28,7 @@ public class ServerThread extends Thread {
     }
   }
   public void comunica() throws Exception {
+    logger.log(LivelloLog.INFO, "Comunicazione iniziata con: " + this.getName(), null);
     boolean condizione = true;
     while (condizione) {
       String rispostaClient = this.clientInput.readLine(); // Il client legge il menu e risponde.
