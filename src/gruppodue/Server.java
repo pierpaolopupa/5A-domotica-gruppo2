@@ -3,7 +3,7 @@ package gruppodue;
 import java.net.ServerSocket;
 
 public class Server {
-  final Logger logger = new Logger();
+  private final Logger logger = new Logger();
   /**
    * Avvia il server, ascolta per potenziali connessioni e se le trova crea un nuovo thread per quest'ultime.
    */
