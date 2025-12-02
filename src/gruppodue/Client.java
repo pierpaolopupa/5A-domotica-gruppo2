@@ -96,7 +96,8 @@ public class Client {
           }
         }
         this.serverOutput.flush();
-        System.out.println(this.serverInput.readLine());
+        if (condizione)
+          System.out.println(this.serverInput.readLine());
       }
       this.socket.close();
     }
